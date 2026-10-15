@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ultimate Lead Cleaner & Editor Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0b0b18;--card:#13132a;--border:#252550;
+    --accent:#7c6fff;--accent2:#a78bfa;--success:#22d3a5;
+    --danger:#f87171;--warn:#fbbf24;--text:#e2e8f0;--muted:#94a3b8;
+  }
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 0 48px}
+  .header{width:100%;background:var(--card);border-bottom:1px solid var(--border);padding:22px 0;text-align:center;margin-bottom:32px}
+  .header h1{font-size:22px;font-weight:700;letter-spacing:-.3px}
+  .header h1 span{color:var(--accent)}
+  .header p{font-size:13px;color:var(--muted);margin-top:4px}
+  .card{width:100%;max-width:620px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px}
+  .card-title{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
+  .drop{border:2px dashed var(--border);border-radius:12px;padding:24px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+  .drop:hover,.drop.over{border-color:var(--accent);background:rgba(124,111,255,.06)}
+  .drop.done{border-style:solid;border-color:var(--success);background:rgba(34,211,165,.05)}
+  .drop-icon{font-size:32px;margin-bottom:8px}
+  .drop-main{font-size:14px;font-weight:500;margin-bottom:4px}
+  .drop-sub{font-size:12px;color:var(--muted)}
+  #file-input{display:none}
+
+  .section-divider{height:1px;background:var(--border);margin:20px 0}
+
+  .option-row{display:flex;align-items:flex-start;gap:12px;margin-top:10px;padding:12px 14px;background:rgba(255,255,255,.02);border-radius:10px;border:1px solid var(--border);transition:all .2s;cursor:pointer;user-select:none}
+  .option-row:hover{border-color:var(--accent)}
+  .custom-check{width:18px;height:18px;min-width:18px;border-radius:5px;border:2px solid var(--accent);background:transparent;display:flex;align-items:center;justify-content:center;transition:background .15s;margin-top:2px}
+  .custom-check.checked{background:var(--accent);border-color:var(--accent)}
+  .custom-check.checked::after{content:'✓';color:#fff;font-size:11px;font-weight:700;line-height:1}
+  .option-text{font-size:13px;color:var(--text);line-height:1.4}
+  .option-text span{color:var(--muted);font-size:11px;display:block;margin-top:2px}
+
+  .input-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .input-group{display:flex;flex-direction:column;gap:6px}
+  .input-group label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase}
+  .text-field{background:#0b0b18;border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;transition:border-color .2s}
+  .text-field:focus{outline:none;border-color:var(--accent)}
+
+  .btn{width:100%;margin-top:20px;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.2px}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover:not(:disabled){background:var(--accent2)}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed}
+  .prog-wrap{height:4px;background:var(--border);border-radius:99px;margin-top:14px;overflow:hidden;display:none}
+  .prog-bar{height:100%;width:0%;background:var(--accent);border-radius:99px;transition:width .4s}
+  .prog-wrap.active{display:block}
+  
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .stat{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:10px 4px;text-align:center}
+  .stat-num{font-size:18px;font-weight:700;margin-bottom:2px}
+  .stat-lbl{font-size:10px;color:var(--muted);font-weight:500}
+  .c-blue{color:var(--text)}.c-red{color:var(--danger)}.c-warn{color:var(--warn)}.c-green{color:var(--success)}
+  
+  .log{background:#080812;border-radius:10px;padding:12px 14px;font-family:'Courier New',monospace;font-size:11px;color:#7dd3fc;line-height:1.6;max-height:140px;overflow-y:auto;border:1px solid var(--border)}
+  
+  .preview-wrap{overflow:auto;max-height:400px;margin-top:4px;border:1px solid var(--border);border-radius:10px;}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:rgba(124,111,255,.12);color:var(--accent2);font-weight:600;padding:10px 12px;text-align:left;font-size:11px;letter-spacing:.5px;position:sticky;top:0}
+  td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text);background:var(--card)}
+  tr:hover td{background:rgba(255,255,255,.03)}
+  td[contenteditable="true"]{background:rgba(124,111,255,0.05);cursor:cell;outline:none;transition:background .2s}
+  td[contenteditable="true"]:focus{background:rgba(124,111,255,0.15);box-shadow:inset 0 0 0 1px var(--accent)}
+  
+  .bottom-row{display:flex;gap:10px;margin-top:14px}
+  .btn-sm{flex:1;padding:11px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+  .btn-sm:hover:not(:disabled){background:var(--border)}
+  .btn-sm.dl{background:var(--success);color:#0b0b18;border-color:var(--success)}
+  .badge{display:inline-block;background:rgba(34,211,165,.15);color:var(--success);border-radius:99px;font-size:10px;font-weight:600;padding:2px 8px}
+  .tip-banner{font-size:11px;color:var(--warn);background:rgba(251,191,36,0.08);border:1px dashed rgba(251,191,36,0.3);padding:8px 12px;border-radius:8px;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🧹 <span>Ultimate</span> Lead Cleaner Pro</h1>
+  <p>Data Verification, Native Hindi Engine, & Real-Time Dynamic Grid Editor</p>
+</div>
+
+<div class="card">
+  <div class="card-title">1. File Selection</div>
+  <div class="drop" id="drop" onclick="triggerBrowse()">
+    <div class="drop-icon" id="drop-icon">📂</div>
+    <div class="drop-main" id="drop-main">Click to browse or drag & drop</div>
+    <div class="drop-sub" id="drop-sub">Accepts calling.xlsx structures directly</div>
+  </div>
+  <input type="file" id="file-input" accept=".xlsx,.xls,.csv"/>
+
+  <div class="card-title" style="margin-top:18px">2. Processing Configurations</div>
+  
+  <div class="option-row" onclick="toggleOption('firstNameOnly')">
+    <div class="custom-check" id="check-firstNameOnly"></div>
+    <div class="option-text">
+      Extract first name only from Full Name
+      <span>Isolates the first name and Removes the last name (e.g: Sidharth Sharma" → "सिद्धार्थ") </span>
+    </div>
+  </div>
+
+  <div class="option-row" onclick="toggleOption('skipHindi')">
+    <div class="custom-check" id="check-skipHindi"></div>
+    <div class="option-text">
+      Skip Hindi Name translation
+      <span>Maintains Name in English only By ticking this. The Name will not convert to Hindi (e.g: Sidharth Sharma" → "Sidharth Sharma") </span>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+  <div class="card-title">3. Blank Name Management & Fallback</div>
+  
+  <div class="input-group">
+    <label>Replace Missing/Blank Names With:</label>
+    <input type="text" id="blank-fallback" class="text-field" placeholder="e.g. Ji, or any other such value to address leads without names" value=""/>
+  </div>
+
+  <div class="option-row" onclick="toggleOption('translateFallback')">
+    <div class="custom-check checked" id="check-translateFallback"></div>
+    <div class="option-text">
+      Convert the blank name filler into Hindi
+      <span>Applies the translation service algorithms to the missing name placeholder value</span>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+  <div class="card-title">4. Inject Custom Data Field (Optional)</div>
+  <div class="input-grid">
+    <div class="input-group">
+      <label>Column Header Name</label>
+      <input type="text" id="custom-header" class="text-field" placeholder="add column header"/>
+    </div>
+    <div class="input-group">
+      <label> Row Value</label>
+      <input type="text" id="custom-value" class="text-field" placeholder="e.g. any value which you want to add."/>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="run-btn" disabled onclick="runCleaning()">▶&nbsp;&nbsp;Clean Data & Process Sheet</button>
+  <div class="prog-wrap" id="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+</div>
+
+<div class="card" id="stats-card" style="display:none">
+  <div class="card-title">Results Metrics</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-num c-blue" id="s-total">—</div><div class="stat-lbl">Total Valid</div></div>
+    <div class="stat"><div class="stat-num c-red"  id="s-phone">—</div><div class="stat-lbl">Bad Phone</div></div>
+    <div class="stat"><div class="stat-num c-warn" id="s-dup">—</div><div class="stat-lbl">Dupes</div></div>
+    <div class="stat"><div class="stat-num c-warn" id="s-junk">—</div><div class="stat-lbl">Junk</div></div>
+    <div class="stat"><div class="stat-num c-green" id="s-final">—</div><div class="stat-lbl">✔ Clean</div></div>
+  </div>
+</div>
+
+<div class="card" id="log-card" style="display:none">
+  <div class="card-title">Log Window</div>
+  <div class="log" id="log"></div>
+</div>
+
+<div class="card" id="preview-card" style="display:none; max-width: 850px;">
+  <div class="card-title">5. Interactive Verification Grid &nbsp;<span class="badge" id="preview-badge"></span></div>
+  <div class="tip-banner">💡 <b>Interactive Mode:</b> You can click directly inside any cell in the table below to edit the text manually. Your updates are saved instantly to the final download!</div>
+  <div class="preview-wrap">
+    <table id="data-table">
+      <thead>
+        <tr id="table-headers">
+          <th>Name</th>
+          <th>Country Code</th>
+          <th>Mobile</th>
+        </tr>
+      </thead>
+      <tbody id="preview-body"></tbody>
+    </table>
+  </div>
+  <div class="bottom-row">
+    <button class="btn-sm dl" id="dl-btn" onclick="downloadFile()">⬇&nbsp; Download Cleaned File</button>
+    <button class="btn-sm" onclick="resetAll()">↺&nbsp; Clear & Reset</button>
+  </div>
+</div>
+
+<script>
+// Application State
+var options = {
+  firstNameOnly: false,
+  skipHindi: false,
+  translateFallback: true
+};
+
+var loadedFile = null;
+var processedDataset = [];
+var resultFileName = 'cleaned.xlsx';
+
+function toggleOption(key) {
+  options[key] = !options[key];
+  var box = document.getElementById('check-' + key);
+  if (options[key]) box.classList.add('checked');
+  else box.classList.remove('checked');
+}
+
+function triggerBrowse() {
+  document.getElementById('file-input').click();
+}
+
+document.getElementById('file-input').addEventListener('change', function(e) {
+  if (e.target.files[0]) setFile(e.target.files[0]);
+});
+
+var drop = document.getElementById('drop');
+drop.addEventListener('dragover', function(e) { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', function() { drop.classList.remove('over'); });
+drop.addEventListener('drop', function(e) {
+  e.preventDefault(); drop.classList.remove('over');
+  if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+});
+
+function setFile(f) {
+  loadedFile = f;
+  resultFileName = f.name.replace(/\.(xlsx?|csv)$/i, '') + '_cleaned.xlsx';
+  document.getElementById('drop-icon').textContent = '✅';
+  document.getElementById('drop-main').textContent = f.name;
+  document.getElementById('drop-main').style.color = 'var(--success)';
+  document.getElementById('drop-sub').textContent = 'Configuration loaded successfully';
+  drop.classList.add('done');
+  document.getElementById('run-btn').disabled = false;
+}
+
+function fetchGoogleTransliteration(word) {
+  return new Promise((resolve) => {
+    var cleanWord = word.trim().replace(/[^A-Za-z]/g, '');
+    if(!cleanWord) return resolve("");
+    
+    var url = "https://inputtools.google.com/request?text=" + encodeURIComponent(cleanWord) + "&itc=hi-t-i0-und&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage";
+    
+    $.ajax({
+      url: url,
+      type: 'GET',
+      dataType: 'json',
+      timeout: 3000,
+      success: function(res) {
+        try {
+          if(res && res[0] === "SUCCESS" && res[1][0][1][0]) {
+            resolve(res[1][0][1][0]);
+          } else { resolve(word); }
+        } catch(e) { resolve(word); }
+      },
+      error: function() { resolve(word); }
+    });
+  });
+}
+
+async function processSingleNameField(nameText, isFallbackValue) {
+  var cleanName = String(nameText || '').trim().replace(/\s+/g, ' ');
+  if (!cleanName) return '';
+
+  if (options.skipHindi) {
+     if (options.firstNameOnly) return cleanName.split(' ')[0];
+     return cleanName;
+  }
+
+  if (isFallbackValue && !options.translateFallback) {
+     return cleanName;
+  }
+
+  if (/[\u0900-\u097F]/.test(cleanName)) return cleanName;
+
+  var tokens = cleanName.split(' ');
+  if (options.firstNameOnly && tokens.length > 0) {
+     return await fetchGoogleTransliteration(tokens[0]);
+  }
+
+  var translatedTokens = [];
+  for (var i = 0; i < tokens.length; i++) {
+     var output = await fetchGoogleTransliteration(tokens[i]);
+     if(output) translatedTokens.push(output);
+  }
+  return translatedTokens.join(' ');
+}
+
+function cleanPhone(raw) {
+  if (!raw || String(raw).trim() === '' || String(raw).trim() === '0') return null;
+  var s = String(raw).replace(/[^0-9]/g, '').trim();
+  if (s.length === 12 && s.startsWith('91')) s = s.slice(2);
+  if (s.length === 11 && s.startsWith('0')) s = s.slice(1);
+  if (s.length !== 10) return null;
+  return '6789'.indexOf(s[0]) > -1 ? s : null;
+}
+
+function addLog(msg) {
+  var el = document.getElementById('log');
+  document.getElementById('log-card').style.display = '';
+  var d = document.createElement('div');
+  d.textContent = '› ' + msg;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+}
+
+function runCleaning() {
+  if (!loadedFile) return;
+
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('preview-body').innerHTML = '';
+  document.getElementById('stats-card').style.display = '';
+  
+  var pw = document.getElementById('prog-wrap');
+  var pb = document.getElementById('prog-bar');
+  pw.className = 'prog-wrap active';
+  pb.style.width = '15%';
+
+  var reader = new FileReader();
+  reader.onload = async function(e){
+    try{
+      var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      var sheet = wb.Sheets[wb.SheetNames[0]];
+      var rawRows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
+      
+      var realDataRows = rawRows.filter(function(r) {
+         if(!r || r.length === 0) return false;
+         return r.join('').trim().length > 0;
+      });
+
+      var displayTotal = realDataRows.length > 0 ? realDataRows.length - 1 : 0;
+      document.getElementById('s-total').textContent = displayTotal;
+      addLog('Total valid sheet entries detected: ' + displayTotal);
+
+      // Force fixed column layout indexes for calling.xlsx
+      var nameColIdx = 0;   
+      var phoneColIdx = 2;  
+
+      var badPhoneCount = 0, duplicateCount = 0, junkCount = 0;
+      var uniqueLookup = {};
+      var tempDataset = [];
+
+      var fallbackInput = document.getElementById('blank-fallback').value.trim();
+      if(!fallbackInput) fallbackInput = "Client"; // Hard protection fallback
+      
+      var customHeaderInput = document.getElementById('custom-header').value.trim();
+      var customValueInput = document.getElementById('custom-value').value.trim();
+
+      for(var i = 1; i < realDataRows.length; i++) {
+        var currentProgress = 15 + Math.floor((i / realDataRows.length) * 80);
+        pb.style.width = currentProgress + '%';
+
+        var row = realDataRows[i];
+        var nameVal = row[nameColIdx] !== undefined && row[nameColIdx] !== null ? String(row[nameColIdx]).trim() : "";
+        var phoneVal = row[phoneColIdx];
+
+        var parsedPhone = cleanPhone(phoneVal);
+        if(!parsedPhone) { badPhoneCount++; continue; }
+        if(uniqueLookup[parsedPhone]) { duplicateCount++; continue; }
+        uniqueLookup[parsedPhone] = 1;
+
+        // FIXED CRITICAL EXTRACTION BALANCER RULES
+        var isBlankRecord = (nameVal === "" || nameVal.toLowerCase() === "name" || nameVal.toLowerCase() === "nan" || nameVal === "0");
+        var finalWorkingString = isBlankRecord ? fallbackInput : nameVal;
+
+        var transformedName = await processSingleNameField(finalWorkingString, isBlankRecord);
+        if(!transformedName) {
+            transformedName = fallbackInput;
+        }
+        
+        var recordObj = {
+           name: transformedName,
+           cc: '+91',
+           mobile: parsedPhone
+        };
+
+        if (customHeaderInput) {
+           recordObj.customField = customValueInput;
+        }
+
+        tempDataset.push(recordObj);
+      }
+
+      pb.style.width = '100%';
+      document.getElementById('s-phone').textContent = badPhoneCount;
+      document.getElementById('s-dup').textContent = duplicateCount;
+      document.getElementById('s-junk').textContent = junkCount;
+      document.getElementById('s-final').textContent = tempDataset.length;
+
+      processedDataset = tempDataset;
+
+      var headerRowHtml = '<th>Name</th><th>Country Code</th><th>Mobile</th>';
+      if(customHeaderInput) {
+         headerRowHtml += '<th>' + customHeaderInput + '</th>';
+      }
+      document.getElementById('table-headers').innerHTML = headerRowHtml;
+
+      var tbody = document.getElementById('preview-body');
+      processedDataset.forEach(function(item, idx) {
+         var tr = document.createElement('tr');
+         
+         var tdName = document.createElement('td');
+         tdName.textContent = item.name;
+         tdName.setAttribute('contenteditable', 'true');
+         tdName.addEventListener('blur', function() {
+            processedDataset[idx].name = tdName.textContent.trim();
+         });
+         
+         var tdCC = document.createElement('td');
+         tdCC.textContent = item.cc;
+         tdCC.setAttribute('contenteditable', 'true');
+         tdCC.addEventListener('blur', function() {
+            processedDataset[idx].cc = tdCC.textContent.trim();
+         });
+
+         var tdMob = document.createElement('td');
+         tdMob.textContent = item.mobile;
+         tdMob.setAttribute('contenteditable', 'true');
+         tdMob.addEventListener('blur', function() {
+            processedDataset[idx].mobile = tdMob.textContent.trim();
+         });
+
+         tr.appendChild(tdName);
+         tr.appendChild(tdCC);
+         tr.appendChild(tdMob);
+
+         if(customHeaderInput) {
+            var tdCust = document.createElement('td');
+            tdCust.textContent = item.customField;
+            tdCust.setAttribute('contenteditable', 'true');
+            tdCust.addEventListener('blur', function() {
+               processedDataset[idx].customField = tdCust.textContent.trim();
+            });
+            tr.appendChild(tdCust);
+         }
+
+         tbody.appendChild(tr);
+      });
+      
+      document.getElementById('preview-badge').textContent = tempDataset.length + ' active lines visible';
+      document.getElementById('preview-card').style.display = '';
+      document.getElementById('run-btn').disabled = false;
+      addLog('Interactive grid compilation processed successfully.');
+
+    } catch(err){
+      addLog('Error rendering array elements: ' + err.message);
+      document.getElementById('run-btn').disabled = false;
+    }
+  };
+  reader.readAsArrayBuffer(loadedFile);
+}
+
+function downloadFile() {
+    if (!processedDataset || processedDataset.length === 0) return;
+    
+    var customHeaderInput = document.getElementById('custom-header').value.trim();
+    var sheetHeaders = ['Name', 'Country Code', 'Mobile'];
+    if(customHeaderInput) {
+       sheetHeaders.push(customHeaderInput);
+    }
+
+    const exportStructure = [sheetHeaders];
+    processedDataset.forEach(item => {
+        var rowArr = [item.name, item.cc, item.mobile];
+        if(customHeaderInput) {
+           rowArr.push(item.customField || '');
+        }
+        exportStructure.push(rowArr);
+    });
+
+    const worksheet = XLSX.utils.aoa_to_sheet(exportStructure);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Cleaned Dataset');
+    XLSX.writeFile(workbook, resultFileName);
+}
+
+function resetAll() { location.reload(); }
+</script>
+</body>
+</html>
